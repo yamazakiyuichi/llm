@@ -1,0 +1,68 @@
+services:
+
+  # ── Ollama: ローカルLLM推論エンジン ────────────────────────────
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    restart: unless-stopped
+    ports:
+      - "${OLLAMA_PORT:-11434}:11434"
+    volumes:
+      # ダウンロード済みモデルをコンテナ再起動後も保持
+      - ./data/ollama:/root/.ollama
+      # GGUFファイルをここに置いてOllamaに登録可能（読み取り専用）
+      - ./models:/models:ro
+    environment:
+      - OLLAMA_HOST=${OLLAMA_HOST:-0.0.0.0}
+    # GPU対応: docker-compose.override.yml で有効化（デフォルトはCPU-only）
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:11434/api/tags"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # ── Open WebUI: ブラウザフロントエンド ─────────────────────────
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui
+    restart: unless-stopped
+    depends_on:
+      ollama:
+        condition: service_healthy
+    ports:
+      - "${WEBUI_PORT:-3000}:8080"
+    volumes:
+      - ./data/open-webui:/app/backend/data
+    environment:
+      # OllamaにDockerネットワーク経由で接続
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - WEBUI_SECRET_KEY=${WEBUI_SECRET_KEY}
+      - WEBUI_AUTH=${WEBUI_AUTH:-true}
+      # RAG: Ollamaのembeddingモデルを使用
+      - RAG_EMBEDDING_ENGINE=ollama
+      - RAG_OLLAMA_BASE_URL=http://ollama:11434
+      - RAG_EMBEDDING_MODEL=${RAG_EMBEDDING_MODEL:-nomic-embed-text:latest}
+      - CHUNK_SIZE=${CHUNK_SIZE:-1000}
+      - CHUNK_OVERLAP=${CHUNK_OVERLAP:-100}
+      - ENABLE_RAG_WEB_SEARCH=false
+      - DEFAULT_MODELS=${DEFAULT_CHAT_MODEL:-}
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8080/health"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # ── Pipelines: カスタム関数・ツール連携（任意）──────────────────
+  # 必要に応じてコメントアウトを解除
+  # pipelines:
+  #   image: ghcr.io/open-webui/pipelines:main
+  #   container_name: pipelines
+  #   restart: unless-stopped
+  #   ports:
+  #     - "9099:9099"
+  #   volumes:
+  #     - ./data/pipelines:/app/pipelines
+  #   environment:
+  #     - PIPELINES_DIR=/app/pipelines

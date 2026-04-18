@@ -1,0 +1,36 @@
+# 実設定ファイル（秘密鍵を含む）
+.env
+
+# Dockerデータディレクトリ（モデルキャッシュ・DBなど大容量）
+data/
+
+# ダウンロードしたGGUFモデルファイル
+models/*.gguf
+models/*.bin
+models/*.safetensors
+
+# rapportドキュメント（個人情報を含む可能性）
+rapport/*
+!rapport/.gitkeep
+
+# ログ
+logs/*
+!logs/.gitkeep
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+*.egg-info/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# スクリーンショット一時ファイル
+*.png
+*.jpg
+*.jpeg
+!models/.gitkeep
+!data/.gitkeep

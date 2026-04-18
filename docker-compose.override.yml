@@ -1,0 +1,15 @@
+# GPU対応オーバーライド（NVIDIA GPU搭載環境向け）
+#
+# このファイルはデフォルトで空です。
+# NVIDIA GPUがある場合は以下のコメントを解除してください。
+# nvidia-container-toolkit のインストールが必要です。
+#
+# services:
+#   ollama:
+#     deploy:
+#       resources:
+#         reservations:
+#           devices:
+#             - driver: nvidia
+#               count: all
+#               capabilities: [gpu]

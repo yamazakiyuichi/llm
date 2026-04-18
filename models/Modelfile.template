@@ -1,0 +1,36 @@
+# Ollama Modelfile テンプレート
+# GGUFファイルからOllamaモデルを作成するためのテンプレート
+#
+# 使い方:
+#   1. このファイルをコピーして編集: cp Modelfile.template Modelfile.mymodel
+#   2. FROM のパスを実際のGGUFファイルに変更
+#   3. docker exec ollama ollama create my-model -f /models/Modelfile.mymodel
+#
+# または pull_models.sh を使用（自動でModelfileを生成します）:
+#   ./scripts/pull_models.sh --gguf /models/your-model.gguf --name your-model
+
+# ベースモデル: GGUFファイルへのパス（コンテナ内のパス）
+FROM /models/your-model.Q4_K_M.gguf
+
+# ── パラメータ ─────────────────────────────────────────────────
+# コンテキストウィンドウサイズ（RAM使用量に直結）
+# 4096: 省メモリ / 8192: バランス / 16384: 長文対応（要大容量RAM）
+PARAMETER num_ctx 4096
+
+# 温度（0.0=決定論的 / 1.0=ランダム）
+PARAMETER temperature 0.7
+
+# 最大出力トークン数（-1=無制限）
+PARAMETER num_predict -1
+
+# ── システムプロンプト（任意）──────────────────────────────────
+# SYSTEM """
+# あなたは役立つAIアシスタントです。日本語で回答してください。
+# """
+
+# ── チャットテンプレート（モデルに合わせて変更）────────────────
+# llama3系:
+# TEMPLATE """{{ if .System }}<|start_header_id|>system<|end_header_id|>
+# {{ .System }}<|eot_id|>{{ end }}{{ if .Prompt }}<|start_header_id|>user<|end_header_id|>
+# {{ .Prompt }}<|eot_id|>{{ end }}<|start_header_id|>assistant<|end_header_id|>
+# {{ .Response }}<|eot_id|>"""
